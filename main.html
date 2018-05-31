@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	</head>
+	<canvas id="myCanvas"></canvas>
+	<body onload="startGame()">
+		<script>
+
+			const cellSize = 5;
+			const canvasSize = (Math.pow(2,7) + 1) * cellSize;
+			
+			var groundArray = new Array(canvasSize / cellSize);
+			for(var i = 0; i < groundArray.length; ++i){
+				groundArray[i] = new Array(canvasSize / cellSize);
+			}
+			
+			function startGame() {
+				randomGrid();
+				myGameArea.start();
+			}
+			
+			var myGameArea = {
+				canvas : document.getElementById("myCanvas"),
+				start : function() {
+					this.canvas.width = canvasSize;
+					this.canvas.height = canvasSize;
+					this.context = this.canvas.getContext("2d");
+					document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+					this.frameNo = 0;
+					this.interval = setInterval(updateGameArea, 200);
+				},
+				clear : function() {
+					this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+				}
+			}
+			
+			function groundCell(height,food,water,roughness,x,y){
+				this.food = food;
+				this.water = water;
+				this.roughness = roughness;
+				this.height = height;
+				this.x = x;
+				this.y = y;
+				this.update = function(){
+					ctx = myGameArea.context;
+					ctx.fillStyle = rgbToHex(this.roughness,this.food,this.water);
+					ctx.fillRect(this.x,this.y,cellSize,cellSize);
+				}
+			}
+			
+			function updateGameArea() {
+				for(var i = 0; i < groundArray.length; ++i){
+					for(var j = 0; j < groundArray[i].length;++j){
+						groundArray[i][j].update();
+					}
+				}
+			}
+			
+			function randomGrid(){
+				for(var i = 0; i < groundArray.length; ++i){
+					for(var j = 0; j < groundArray[i].length;++j){
+						var food = Math.floor(Math.random() * 256);
+						var water = Math.floor(Math.random() * 256);
+						var roughness = Math.floor(Math.random() * 256);
+						var height = Math.floor(Math.random() * 256);
+						groundArray[i][j] = new groundCell(height,food,water,roughness,j*cellSize,i*cellSize);
+					}
+				}
+			}
+			
+			function diamondSquare(size,x,y){
+				if(size == 2){
+					return;
+				}
+				if (typeof groundArray[x][y] === 'undefined' || groundArray[x][y] === null) {
+    				var food = Math.floor(Math.random() * 256);
+					var water = Math.floor(Math.random() * 256);
+					var roughness = Math.floor(Math.random() * 256);
+					var height = Math.floor(Math.random() * 256);
+					groundArray[x][y] = new groundCell(height,food,water,roughness,x*cellSize,y*cellSize);
+				}
+				if (typeof groundArray[x + size - 1][y] === 'undefined' || groundArray[x + size - 1][y] === null) {
+    				var food = Math.floor(Math.random() * 256);
+					var water = Math.floor(Math.random() * 256);
+					var roughness = Math.floor(Math.random() * 256);
+					var height = Math.floor(Math.random() * 256);
+					groundArray[x + size - 1][j] = new groundCell(height,food,water,roughness,(x + size - 1)*cellSize,y*cellSize);
+				}
+				if (typeof groundArray[x][y + size - 1] === 'undefined' || groundArray[x][y + size - 1] === null) {
+    				var food = Math.floor(Math.random() * 256);
+					var water = Math.floor(Math.random() * 256);
+					var roughness = Math.floor(Math.random() * 256);
+					var height = Math.floor(Math.random() * 256);
+					groundArray[i][y + size - 1] = new groundCell(height,food,water,roughness,x*cellSize,(y + size - 1)*cellSize);
+				}
+				if (typeof groundArray[x + size - 1][y + size - 1] === 'undefined' || groundArray[x + size - 1][y + size - 1] === null) {
+    				var food = Math.floor(Math.random() * 256);
+					var water = Math.floor(Math.random() * 256);
+					var roughness = Math.floor(Math.random() * 256);
+					var height = Math.floor(Math.random() * 256);
+					groundArray[x + size - 1][y + size - 1] = new groundCell(height,food,water,roughness,(x + size - 1)*cellSize,(y + size - 1)*cellSize);
+				}
+				var 
+			}
+			
+			function avgCell(){
+				
+			}
+			
+			function componentToHex(c) {
+    			var hex = c.toString(16);
+    			return hex.length == 1 ? "0" + hex : hex;
+			}
+			
+			function rgbToHex(r, g, b) {
+    			return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+			}
+		</script>
+	</body>
+</html>
