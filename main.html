@@ -70,9 +70,6 @@
 			}
 			
 			function diamondSquare(size,x,y){
-				if(size == 2){
-					return;
-				}
 				if (typeof groundArray[x][y] === 'undefined' || groundArray[x][y] === null) {
     				var food = Math.floor(Math.random() * 256);
 					var water = Math.floor(Math.random() * 256);
@@ -85,7 +82,7 @@
 					var water = Math.floor(Math.random() * 256);
 					var roughness = Math.floor(Math.random() * 256);
 					var height = Math.floor(Math.random() * 256);
-					groundArray[x + size - 1][j] = new groundCell(height,food,water,roughness,(x + size - 1)*cellSize,y*cellSize);
+					groundArray[x + size - 1][y] = new groundCell(height,food,water,roughness,(x + size - 1)*cellSize,y*cellSize);
 				}
 				if (typeof groundArray[x][y + size - 1] === 'undefined' || groundArray[x][y + size - 1] === null) {
     				var food = Math.floor(Math.random() * 256);
@@ -101,11 +98,44 @@
 					var height = Math.floor(Math.random() * 256);
 					groundArray[x + size - 1][y + size - 1] = new groundCell(height,food,water,roughness,(x + size - 1)*cellSize,(y + size - 1)*cellSize);
 				}
-				var 
+				diamondSquareRec(size,x,y);
 			}
 			
-			function avgCell(){
-				
+			function diamondSquareRec(size,x,y){
+				if(size == 2){
+					return;
+				}
+				var cellList = new Array(4);
+				midList[0] = groundArray[x][y];
+				midList[1] = groundArray[x + size - 1][y];
+				midList[2] = groundArray[x][y + size - 1];
+				midList[3] = groundArray[x + size - 1][y + size - 1];
+				var midSize = Math.ceil(size / 2);
+				var midX = x + midSize;
+				var midY = y + midSize;
+				groundArray[midX][midY] = avgCell(midList,midX,midY,15);
+				var topX = x + midSize;
+				var topY = y;
+				groundArray[topX][topY] = avgCell(cellList,topX,topY,15);
+			}
+			
+			function avgCell(cellList,x,y,randRange){
+				var avgheight = 0;
+				var avgfood = 0;
+				var avgwater = 0;
+				var avgrough = 0;
+				for(var i = 0; i < cellList.length; i++){
+					avgheight += cellList[i].height;
+					avgfood += cellList[i].food;
+					avgwater += cellList[i].water;
+					avgrough += cellList[i].roughness;
+				}
+				avgheight = Math.floor((avgheight / cellList.length) + Math.floor(Math.random() * randRange));
+				avgfood = Math.floor((avgfood / cellList.length) + Math.floor(Math.random() * randRange));
+				avgwater = Math.floor((avgwater / cellList.length) + Math.floor(Math.random() * randRange));
+				avgrough = Math.floor((avgrough / cellList.length) + Math.floor(Math.random() * randRange));
+				var avgCell = new groundCell(avgheight,avgfood,avgwater,avgrough, x, y);
+				return avgCell;
 			}
 			
 			function componentToHex(c) {
