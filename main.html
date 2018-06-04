@@ -6,9 +6,10 @@
 	<canvas id="myCanvas"></canvas>
 	<body onload="startGame()">
 		<script>
-
-			const cellSize = 5;
-			const canvasSize = (Math.pow(2,7) + 1) * cellSize;
+			const cellSize = 1;
+			const canvasPow = 10;
+			const canvasSize = (Math.pow(2,canvasPow) + 1) * cellSize;
+			const waterLevel = 80;
 			
 			var groundArray = new Array(canvasSize / cellSize);
 			for(var i = 0; i < groundArray.length; ++i){
@@ -16,7 +17,10 @@
 			}
 			
 			function startGame() {
-				randomGrid();
+				diamondSquare();
+				for(var i = 0; i < canvasPow * 2; ++i){
+					smoothGrid();
+				}
 				myGameArea.start();
 			}
 			
@@ -28,24 +32,40 @@
 					this.context = this.canvas.getContext("2d");
 					document.body.insertBefore(this.canvas, document.body.childNodes[0]);
 					this.frameNo = 0;
-					this.interval = setInterval(updateGameArea, 200);
+					updateGameArea();
+					//this.interval = setInterval(updateGameArea, 200);
 				},
 				clear : function() {
 					this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 				}
 			}
 			
-			function groundCell(height,food,water,roughness,x,y){
-				this.food = food;
-				this.water = water;
-				this.roughness = roughness;
+			function groundCell(height,x,y){
 				this.height = height;
 				this.x = x;
 				this.y = y;
+				if(this.height > waterLevel){
+					this.water = 0;
+					this.food = (255 - waterLevel) - this.height + 5;
+				}
+				else{
+					this.water = waterLevel - this.height;
+					this.food = this.height;
+				}
 				this.update = function(){
 					ctx = myGameArea.context;
-					ctx.fillStyle = rgbToHex(this.roughness,this.food,this.water);
-					ctx.fillRect(this.x,this.y,cellSize,cellSize);
+					var r = Math.round(this.height / 4);
+					var g = this.food;
+					var b;
+					if(this.height > waterLevel){
+						b = Math.round(this.height / 4);
+						g = Math.min(255,g + Math.round(this.height / 2))
+					}
+					else{
+						b = (255 - waterLevel) - this.water;
+					}
+					ctx.fillStyle = rgbToHex(r,g,b);
+					ctx.fillRect(this.x*cellSize,this.y*cellSize,cellSize,cellSize);
 				}
 			}
 			
@@ -60,52 +80,154 @@
 			function randomGrid(){
 				for(var i = 0; i < groundArray.length; ++i){
 					for(var j = 0; j < groundArray[i].length;++j){
-						var food = Math.floor(Math.random() * 256);
-						var water = Math.floor(Math.random() * 256);
-						var roughness = Math.floor(Math.random() * 256);
 						var height = Math.floor(Math.random() * 256);
-						groundArray[i][j] = new groundCell(height,food,water,roughness,j*cellSize,i*cellSize);
+						groundArray[i][j] = new groundCell(height,j,i);
 					}
 				}
 			}
 			
-			function diamondSquare(size,x,y){
+			function diamondSquare(){
+				var x = 0;
+				var y = 0;
+				var size = canvasSize/cellSize;
+				if (typeof groundArray[x][y] === 'undefined' || groundArray[x][y] === null) {
+					var height = Math.floor(Math.random() * 256);
+					groundArray[x][y] = new groundCell(height,x,y);
+				}
+				if (typeof groundArray[x + size - 1][y] === 'undefined' || groundArray[x + size - 1][y] === null) {
+					var height = Math.floor(Math.random() * 256);
+					groundArray[x + size - 1][y] = new groundCell(height,(x + size - 1),y);
+				}
+				if (typeof groundArray[x][y + size - 1] === 'undefined' || groundArray[x][y + size - 1] === null) {
+					var height = Math.floor(Math.random() * 256);
+					groundArray[x][y + size - 1] = new groundCell(height,x,(y + size - 1));
+				}
+				if (typeof groundArray[x + size - 1][y + size - 1] === 'undefined' || groundArray[x + size - 1][y + size - 1] === null) {
+					var height = Math.floor(Math.random() * 256);
+					groundArray[x + size - 1][y + size - 1] = new groundCell(height,(x + size - 1),(y + size - 1));
+				}
+				diamondSquareRec(canvasSize/cellSize,0,0);
+			}
+			
+			function diamondSquareRec(size,x,y){
 				if(size == 2){
 					return;
 				}
-				if (typeof groundArray[x][y] === 'undefined' || groundArray[x][y] === null) {
-    				var food = Math.floor(Math.random() * 256);
-					var water = Math.floor(Math.random() * 256);
-					var roughness = Math.floor(Math.random() * 256);
-					var height = Math.floor(Math.random() * 256);
-					groundArray[x][y] = new groundCell(height,food,water,roughness,x*cellSize,y*cellSize);
+				var midList = new Array(4);
+				midList[0] = groundArray[x][y];
+				midList[1] = groundArray[x + size - 1][y];
+				midList[2] = groundArray[x][y + size - 1];
+				midList[3] = groundArray[x + size - 1][y + size - 1];
+				var midSize = Math.ceil(size / 2);
+				
+				var midX = x + midSize - 1;
+				var midY = y + midSize - 1;
+				groundArray[midX][midY] = avgCell(midList,midX,midY,size);
+				
+				var topList = [groundArray[midX][midY],midList[0],midList[1]];
+				var topX = x + midSize - 1;
+				var topY = y;
+				if(typeof groundArray[topX][topY] === 'undefined'){
+					groundArray[topX][topY] = avgCell(topList,topX,topY,size);
 				}
-				if (typeof groundArray[x + size - 1][y] === 'undefined' || groundArray[x + size - 1][y] === null) {
-    				var food = Math.floor(Math.random() * 256);
-					var water = Math.floor(Math.random() * 256);
-					var roughness = Math.floor(Math.random() * 256);
-					var height = Math.floor(Math.random() * 256);
-					groundArray[x + size - 1][j] = new groundCell(height,food,water,roughness,(x + size - 1)*cellSize,y*cellSize);
+				else{
+					var duo = [groundArray[topX][topY],avgCell(topList,topX,topY,size)];
+					groundArray[topX][topY] = avgCell(duo,topX,topY,1);
 				}
-				if (typeof groundArray[x][y + size - 1] === 'undefined' || groundArray[x][y + size - 1] === null) {
-    				var food = Math.floor(Math.random() * 256);
-					var water = Math.floor(Math.random() * 256);
-					var roughness = Math.floor(Math.random() * 256);
-					var height = Math.floor(Math.random() * 256);
-					groundArray[i][y + size - 1] = new groundCell(height,food,water,roughness,x*cellSize,(y + size - 1)*cellSize);
+				
+				var rightList = [groundArray[midX][midY],midList[1],midList[3]];
+				var rX = x + size - 1;
+				var rY = y + midSize - 1;
+				if(typeof groundArray[rX][rY] === 'undefined'){
+					groundArray[rX][rY] = avgCell(rightList,rX,rY,size);
 				}
-				if (typeof groundArray[x + size - 1][y + size - 1] === 'undefined' || groundArray[x + size - 1][y + size - 1] === null) {
-    				var food = Math.floor(Math.random() * 256);
-					var water = Math.floor(Math.random() * 256);
-					var roughness = Math.floor(Math.random() * 256);
-					var height = Math.floor(Math.random() * 256);
-					groundArray[x + size - 1][y + size - 1] = new groundCell(height,food,water,roughness,(x + size - 1)*cellSize,(y + size - 1)*cellSize);
+				else{
+					var duo = [groundArray[rX][rY],avgCell(rightList,rX,rY,size)];
+					groundArray[rX][rY] = avgCell(duo,rX,rY,1);
 				}
-				var 
+				
+				var botList = [groundArray[midX][midY],midList[3],midList[2]];
+				var botX = x + midSize - 1;
+				var botY = y + size - 1;
+				if(typeof groundArray[botX][botY] === 'undefined'){
+					groundArray[botX][botY] = avgCell(botList,botX,botY,size);
+				}
+				else{
+					var duo = [groundArray[botX][botY],avgCell(botList,botX,botY,size)];
+					groundArray[botX][botY] = avgCell(duo,botX,botY,1);
+				}
+				
+				var leftList = [groundArray[midX][midY],midList[0],midList[2]];
+				var lX = x;
+				var lY = y + midSize - 1;
+				if(typeof groundArray[lX][lY] === 'undefined'){
+					groundArray[lX][lY] = avgCell(leftList,lX,lY,size);
+				}
+				else{
+					var duo = [groundArray[lX][lY],avgCell(leftList,lX,lY,size)];
+					groundArray[lX][lY] = avgCell(duo,lX,lY,1);
+				}
+				
+				diamondSquareRec(midSize,x,y);
+				diamondSquareRec(midSize,topX,y);
+				diamondSquareRec(midSize,midX,midY);
+				diamondSquareRec(midSize,x,lY);
 			}
 			
-			function avgCell(){
+			function avgCell(cellList,x,y,randRange){
+				var avgheight = 0;
+				for(var i = 0; i < cellList.length; i++){
+					avgheight += cellList[i].height;
+				}
+				avgheight = Math.floor((avgheight / cellList.length) + Math.floor(Math.random() * randRange * 2) - randRange);
+				if(avgheight > 255){
+					avgheight = 255;
+				}
+				if(avgheight < 0){
+					avgheight = 0;
+				}
+				var avgCell = new groundCell(avgheight,x,y);
+				return avgCell;
+			}
+			
+			function smoothGrid(){
 				
+				for(var i = 0; i < groundArray.length; ++i){
+					for(var j = 0; j < groundArray[i].length; ++j){
+						var neighbors = getNeighbors(i,j);
+						groundArray[i][j] = avgCell(neighbors,i,j,1);
+					}
+				}
+			}
+			
+			function getNeighbors(x,y){
+				var neighbors = new Array();
+				if(x > 0){
+					neighbors.push(groundArray[x-1][y]);
+					if(y > 0){
+						neighbors.push(groundArray[x-1][y-1]);
+					}
+				}
+				if(y > 0){
+					neighbors.push(groundArray[x][y-1]);
+					if(x < (canvasSize / cellSize) - 1){
+						neighbors.push(groundArray[x+1][y-1]);
+					}
+				}
+				if(x < (canvasSize / cellSize) - 1){
+					neighbors.push(groundArray[x+1][y]);
+					if(y < (canvasSize / cellSize) - 1){
+						neighbors.push(groundArray[x+1][y+1]);
+					}
+				}
+				if(y < (canvasSize / cellSize) - 1){
+					neighbors.push(groundArray[x][y+1]);
+					if(x > 0){
+						neighbors.push(groundArray[x-1][y+1]);
+					}
+				}
+				neighbors.push(groundArray[x][y])
+				return neighbors;
 			}
 			
 			function componentToHex(c) {
