@@ -6,9 +6,9 @@
 	<canvas id="myCanvas"></canvas>
 	<body onload="startGame()">
 		<script>
-
 			const cellSize = 1;
-			const canvasSize = (Math.pow(2,9) + 1) * cellSize;
+			const canvasPow = 10;
+			const canvasSize = (Math.pow(2,canvasPow) + 1) * cellSize;
 			const waterLevel = 80;
 			
 			var groundArray = new Array(canvasSize / cellSize);
@@ -18,7 +18,7 @@
 			
 			function startGame() {
 				diamondSquare();
-				for(var i = 0; i < 10; ++i){
+				for(var i = 0; i < canvasPow * 2; ++i){
 					smoothGrid();
 				}
 				myGameArea.start();
@@ -32,7 +32,8 @@
 					this.context = this.canvas.getContext("2d");
 					document.body.insertBefore(this.canvas, document.body.childNodes[0]);
 					this.frameNo = 0;
-					this.interval = setInterval(updateGameArea, 200);
+					updateGameArea();
+					//this.interval = setInterval(updateGameArea, 200);
 				},
 				clear : function() {
 					this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -45,7 +46,7 @@
 				this.y = y;
 				if(this.height > waterLevel){
 					this.water = 0;
-					this.food = (255 - waterLevel) - this.height;
+					this.food = (255 - waterLevel) - this.height + 5;
 				}
 				else{
 					this.water = waterLevel - this.height;
