@@ -3,40 +3,59 @@
 	<head>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	</head>
-	<canvas id="myCanvas"></canvas>
+	<canvas id="map" style="position: absolute; left: 0; top: 0; z-index: 0;"></canvas>
+	<canvas id="creatures" style="position: absolute; left: 0; top: 0; z-index: 1;"></canvas>
 	<body onload="startGame()">
 		<script>
-			const cellSize = 1;
-			const canvasPow = 10;
-			const canvasSize = (Math.pow(2,canvasPow) + 1) * cellSize;
+
+			const cellSize = 5;
+			const canvasSize = (Math.pow(2,9) + 1) * cellSize;
 			const waterLevel = 80;
+			const startingCreatures = 500;
 			
+			var creatures = new Array();
 			var groundArray = new Array(canvasSize / cellSize);
 			for(var i = 0; i < groundArray.length; ++i){
 				groundArray[i] = new Array(canvasSize / cellSize);
 			}
 			
 			function startGame() {
-				diamondSquare();
-				for(var i = 0; i < canvasPow * 2; ++i){
-					smoothGrid();
-				}
 				myGameArea.start();
 			}
 			
+			function setupGame(){
+				diamondSquare();
+				for(var i = 0; i < 10; ++i){
+					smoothGrid();
+				}
+				for(var i = 0; i < groundArray.length; ++i){
+					for(var j = 0; j < groundArray[i].length; ++j){
+						groundArray[i][j].update();
+					}
+				}
+				for(i = 0; i < startingCreatures; ++i){
+					creatures.push(new creature());
+				}
+			}
+			
 			var myGameArea = {
-				canvas : document.getElementById("myCanvas"),
+				map : document.getElementById("map"),
+				creatures : document.getElementById("creatures"),
 				start : function() {
-					this.canvas.width = canvasSize;
-					this.canvas.height = canvasSize;
-					this.context = this.canvas.getContext("2d");
-					document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+					this.map.width = canvasSize;
+					this.map.height = canvasSize;
+					this.mapContext = this.map.getContext("2d");
+					document.body.insertBefore(this.map, document.body.childNodes[0]);
+					this.creatures.width = canvasSize;
+					this.creatures.height = canvasSize;
+					this.creaturesContext = this.creatures.getContext("2d");
+					document.body.insertBefore(this.creatures, document.body.childNodes[0]);
 					this.frameNo = 0;
-					updateGameArea();
-					//this.interval = setInterval(updateGameArea, 200);
+					setupGame();
+					this.interval = setInterval(updateGameArea, 200);
 				},
 				clear : function() {
-					this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+					this.creaturesContext.clearRect(0, 0, this.creatures.width, this.creatures.height);
 				}
 			}
 			
@@ -46,14 +65,15 @@
 				this.y = y;
 				if(this.height > waterLevel){
 					this.water = 0;
-					this.food = (255 - waterLevel) - this.height + 5;
+					this.food = (255 - waterLevel) - this.height;
 				}
 				else{
 					this.water = waterLevel - this.height;
 					this.food = this.height;
 				}
+				
 				this.update = function(){
-					ctx = myGameArea.context;
+					ctx = myGameArea.mapContext;
 					var r = Math.round(this.height / 4);
 					var g = this.food;
 					var b;
@@ -69,11 +89,31 @@
 				}
 			}
 			
+			function creature(){
+				this.speed = Math.round(Math.random()*5);
+				this.energy = Math.round(Math.random()* 100) + 100;
+				this.size = Math.round(Math.random()*3) + 1;
+				this.x = Math.floor(Math.random()*canvasSize);
+				this.y = Math.floor(Math.random()*canvasSize);
+				this.r = Math.floor(Math.random()*255);
+				this.g = Math.floor(Math.random()*255);
+				this.b = Math.floor(Math.random()*255);
+				
+				this.update = function() {
+					this.x = Math.max(0,Math.min(canvasSize,this.x + this.speed * Math.round(1 - Math.random()*2)));
+					this.y = Math.max(0,Math.min(canvasSize,this.y + this.speed * Math.round(1 - Math.random()*2)));
+					ctx = myGameArea.creaturesContext;
+					ctx.fillStyle = rgbToHex(this.r,this.g,this.b);
+					ctx.beginPath();
+					ctx.arc(this.x,this.y,this.size,0,2*Math.PI);
+					ctx.fill();
+				}
+			}
+			
 			function updateGameArea() {
-				for(var i = 0; i < groundArray.length; ++i){
-					for(var j = 0; j < groundArray[i].length;++j){
-						groundArray[i][j].update();
-					}
+				myGameArea.clear();
+				for(i = 0; i < creatures.length; ++i){
+					creatures[i].update();
 				}
 			}
 			
@@ -167,7 +207,6 @@
 					var duo = [groundArray[lX][lY],avgCell(leftList,lX,lY,size)];
 					groundArray[lX][lY] = avgCell(duo,lX,lY,1);
 				}
-				
 				diamondSquareRec(midSize,x,y);
 				diamondSquareRec(midSize,topX,y);
 				diamondSquareRec(midSize,midX,midY);
