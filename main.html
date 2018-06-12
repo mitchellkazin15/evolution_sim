@@ -138,19 +138,20 @@
 				midList[2] = groundArray[x][y + size - 1];
 				midList[3] = groundArray[x + size - 1][y + size - 1];
 				var midSize = Math.ceil(size / 2);
+				var rand = 255 * (size / (canvasSize / cellSize));
 				
 				var midX = x + midSize - 1;
 				var midY = y + midSize - 1;
-				groundArray[midX][midY] = avgCell(midList,midX,midY,size);
+				groundArray[midX][midY] = avgCell(midList,midX,midY,rand);
 				
 				var topList = [groundArray[midX][midY],midList[0],midList[1]];
 				var topX = x + midSize - 1;
 				var topY = y;
 				if(typeof groundArray[topX][topY] === 'undefined'){
-					groundArray[topX][topY] = avgCell(topList,topX,topY,size);
+					groundArray[topX][topY] = avgCell(topList,topX,topY,rand);
 				}
 				else{
-					var duo = [groundArray[topX][topY],avgCell(topList,topX,topY,size)];
+					var duo = [groundArray[topX][topY],avgCell(topList,topX,topY,rand)];
 					groundArray[topX][topY] = avgCell(duo,topX,topY,1);
 				}
 				
@@ -158,10 +159,10 @@
 				var rX = x + size - 1;
 				var rY = y + midSize - 1;
 				if(typeof groundArray[rX][rY] === 'undefined'){
-					groundArray[rX][rY] = avgCell(rightList,rX,rY,size);
+					groundArray[rX][rY] = avgCell(rightList,rX,rY,rand);
 				}
 				else{
-					var duo = [groundArray[rX][rY],avgCell(rightList,rX,rY,size)];
+					var duo = [groundArray[rX][rY],avgCell(rightList,rX,rY,rand)];
 					groundArray[rX][rY] = avgCell(duo,rX,rY,1);
 				}
 				
@@ -169,10 +170,10 @@
 				var botX = x + midSize - 1;
 				var botY = y + size - 1;
 				if(typeof groundArray[botX][botY] === 'undefined'){
-					groundArray[botX][botY] = avgCell(botList,botX,botY,size);
+					groundArray[botX][botY] = avgCell(botList,botX,botY,rand);
 				}
 				else{
-					var duo = [groundArray[botX][botY],avgCell(botList,botX,botY,size)];
+					var duo = [groundArray[botX][botY],avgCell(botList,botX,botY,rand)];
 					groundArray[botX][botY] = avgCell(duo,botX,botY,1);
 				}
 				
@@ -180,10 +181,10 @@
 				var lX = x;
 				var lY = y + midSize - 1;
 				if(typeof groundArray[lX][lY] === 'undefined'){
-					groundArray[lX][lY] = avgCell(leftList,lX,lY,size);
+					groundArray[lX][lY] = avgCell(leftList,lX,lY,rand);
 				}
 				else{
-					var duo = [groundArray[lX][lY],avgCell(leftList,lX,lY,size)];
+					var duo = [groundArray[lX][lY],avgCell(leftList,lX,lY,rand)];
 					groundArray[lX][lY] = avgCell(duo,lX,lY,1);
 				}
 				diamondSquareRec(midSize,x,y);
